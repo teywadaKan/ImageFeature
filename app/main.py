@@ -7,7 +7,7 @@ app = FastAPI()
 
 def readb64(uri):
     # input base64 Image "uri"
-    encoded_data = uri.split(',')[1]
+    encoded_data = uri
     nparr = np.fromstring(base64.b64decode(encoded_data), np.uint8)
 
     # convert Base64 to image
@@ -15,9 +15,16 @@ def readb64(uri):
     # cv2.imshow(img)
     return img
 
-# Load the image as grayscale\
-def cal_hog(img):
-    # img_gray = cv2.imread(img, 0)
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+
+@app.get("/api/genhog")
+async def get_hog(request:Request):  
+    item =  await request.json()
+    item_str = item["img"]
+    img = readb64(item_str)
+    
     img_new = cv2.resize(img, (128,128), cv2.INTER_AREA)
     win_size = img_new.shape
     cell_size = (8, 8)
@@ -29,17 +36,5 @@ def cal_hog(img):
     hog = cv2.HOGDescriptor(win_size, block_size, block_stride, cell_size, num_bins)
     # Compute the HOG Descriptor for the gray scale image
     hog_descriptor = hog.compute(img_new)
-    # print ('HOG Descriptor:', hog_descriptor)
-    return hog_descriptor
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@app.get("/api/genhog")
-async def get_hog(request:Request):  
-    item =  await request.json()
-    item_str = item["img"]
-    img = readb64(item_str)
-    hog = cal_hog(img)
-    return {"Hog": hog.tolist()}
+    # print(hog_descriptor.tolist())
+    return {"Hog": hog_descriptor.tolist()}
